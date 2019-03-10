@@ -6,7 +6,7 @@
 ;; Maintainer: Tassilo Horn <tsdh@gnu.org>
 ;; Keywords: tools
 ;; Package-Requires: ((emacs "26.1"))
-;; Version: 0
+;; Version: 1.0
 
 ;; This file is part of GNU Emacs.
 
@@ -106,13 +106,15 @@ Shorter means less characters here."
 (defun visual-filename-abbrev--abbrev-visually-shorter-p (buffer pos filename abbrev)
   "Return non-nil if ABBREV's display representation is shorter than FILENAME.
 This takes the font into account."
-  ;; NOTE: The docs say that object in an conditional display spec is always a
-  ;; buffer, but actually it sometimes is a window.  See bug#34771.
-  (let ((font (font-at pos (if (windowp buffer)
-			       buffer
-			     (get-buffer-window buffer)))))
-    (< (visual-filename-abbrev--get-visual-width abbrev font)
-       (visual-filename-abbrev--get-visual-width filename font))))
+  ;; When activated from a hook, this function may run before the current
+  ;; buffer is shown in a window.  In that case, `font-at' would error with
+  ;; "Specified window is not displaying the current buffer".
+  (let ((window (selected-window)))
+    (when (and window
+	       (eq (window-buffer window) (current-buffer)))
+      (let ((font (font-at pos window)))
+	(< (visual-filename-abbrev--get-visual-width abbrev font)
+	   (visual-filename-abbrev--get-visual-width filename font))))))
 
 (defcustom visual-filename-abbrev-predicates
   (list #'visual-filename-abbrev--abbrev-visually-shorter-p)
