@@ -1,6 +1,6 @@
 ;;; visual-filename-abbrev.el --- Visually abbreviate filenames  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019 Free Software Foundation, Inc
+;; Copyright (C) 2019-2020 Free Software Foundation, Inc
 
 ;; Author: Tassilo Horn <tsdh@gnu.org>
 ;; Maintainer: Tassilo Horn <tsdh@gnu.org>
@@ -103,7 +103,7 @@ Shorter means less characters here."
 	      (font-get-glyphs font 0 (length str) str)
 	      0))
 
-(defun visual-filename-abbrev--abbrev-visually-shorter-p (buffer pos filename abbrev)
+(defun visual-filename-abbrev--abbrev-visually-shorter-p (_buffer pos filename abbrev)
   "Return non-nil if ABBREV's display representation is shorter than FILENAME.
 This takes the font into account."
   ;; When activated from a hook, this function may run before the current
@@ -156,15 +156,13 @@ These predicates are available:
     (when (overlay-get ol 'visual-filename-abbrev)
       (delete-overlay ol))))
 
-(defun visual-filename-abbrev--cursor-sensor (window old-pos dir)
-  ;;(message "cs: %S %S %S" window old-pos dir)
+(defun visual-filename-abbrev--cursor-sensor (_window old-pos dir)
   (when-let ((ol (if (eq dir 'entered)
 		     (visual-filename-abbrev--get-overlay (point))
 		   (or (visual-filename-abbrev--get-overlay old-pos)
 		       (visual-filename-abbrev--get-overlay (if (> (point) old-pos)
 								(1- old-pos)
 							      (1+ old-pos)))))))
-    ;;(message "  => %S" ol)
     (if (eq dir 'entered)
 	(when-let ((d (overlay-get ol 'display)))
 	  (overlay-put ol 'visual-filename-abbrev--display-backup d)
