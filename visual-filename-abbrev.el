@@ -1,12 +1,12 @@
 ;;; visual-filename-abbrev.el --- Visually abbreviate filenames  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019-2020 Free Software Foundation, Inc
+;; Copyright (C) 2019-2021 Free Software Foundation, Inc
 
 ;; Author: Tassilo Horn <tsdh@gnu.org>
 ;; Maintainer: Tassilo Horn <tsdh@gnu.org>
 ;; Keywords: tools
 ;; Package-Requires: ((emacs "26.1"))
-;; Version: 1.0
+;; Version: 1.1
 
 ;; This file is part of GNU Emacs.
 
@@ -78,6 +78,9 @@ matching `visual-filename-abbrev-regex' will be replaced by
   :type 'boolean)
 
 (defun visual-filename-abbrev--get-abbrev (filename)
+  "Return an abbreviated name for FILENAME.
+Replaces matches of `visual-filename-abbrev-replace-regex' with
+`visual-filename-abbrev-ellipsis'."
   (let ((file (file-name-nondirectory filename))
 	(dir (file-name-directory filename)))
     (concat
@@ -88,6 +91,7 @@ matching `visual-filename-abbrev-regex' will be replaced by
      file)))
 
 (defsubst visual-filename-abbrev--get-overlay (pos)
+  "Get the `visual-filename-abbrev' overlay at POS."
   (car (seq-filter
 	(lambda (o) (overlay-get o 'visual-filename-abbrev))
 	(overlays-at pos))))
@@ -99,13 +103,14 @@ Shorter means less characters here."
      (string-width filename)))
 
 (defsubst visual-filename-abbrev--get-visual-width (str font)
+  "Get the pixel width of STR with FONT."
   (seq-reduce (lambda (acc g) (+ acc (aref g 4)))
 	      (font-get-glyphs font 0 (length str) str)
 	      0))
 
 (defun visual-filename-abbrev--abbrev-visually-shorter-p (_buffer pos filename abbrev)
   "Return non-nil if ABBREV's display representation is shorter than FILENAME.
-This takes the font into account."
+This takes the font at POS into account."
   ;; When activated from a hook, this function may run before the current
   ;; buffer is shown in a window.  In that case, `font-at' would error with
   ;; "Specified window is not displaying the current buffer".
@@ -160,9 +165,10 @@ These predicates are available:
   (when-let ((ol (if (eq dir 'entered)
 		     (visual-filename-abbrev--get-overlay (point))
 		   (or (visual-filename-abbrev--get-overlay old-pos)
-		       (visual-filename-abbrev--get-overlay (if (> (point) old-pos)
-								(1- old-pos)
-							      (1+ old-pos)))))))
+		       (visual-filename-abbrev--get-overlay
+                        (if (> (point) old-pos)
+			    (1- old-pos)
+			  (1+ old-pos)))))))
     (if (eq dir 'entered)
 	(when-let ((d (overlay-get ol 'display)))
 	  (overlay-put ol 'visual-filename-abbrev--display-backup d)
@@ -201,7 +207,10 @@ These predicates are available:
 (defvar visual-filename-abbrev--csm-before-activation nil)
 (make-variable-buffer-local 'visual-filename-abbrev--csm-before-activation)
 
-;;###autoload
+(defvar cursor-sensor-mode)
+(declare-function cursor-sensor-mode "cursor-sensor")
+
+;;;###autoload
 (define-minor-mode visual-filename-abbrev-mode
   "Visually abbreviate the directory part of filenames."
   nil " VFAbbr" nil
