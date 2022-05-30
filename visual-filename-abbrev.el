@@ -1,12 +1,12 @@
 ;;; visual-filename-abbrev.el --- Visually abbreviate filenames  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019-2021 Free Software Foundation, Inc
+;; Copyright (C) 2019-2022 Free Software Foundation, Inc
 
 ;; Author: Tassilo Horn <tsdh@gnu.org>
 ;; Maintainer: Tassilo Horn <tsdh@gnu.org>
 ;; Keywords: tools
 ;; Package-Requires: ((emacs "26.1"))
-;; Version: 1.1
+;; Version: 1.2
 
 ;; This file is part of GNU Emacs.
 
@@ -111,9 +111,10 @@ Shorter means less characters here."
 (defun visual-filename-abbrev--abbrev-visually-shorter-p (_buffer pos filename abbrev)
   "Return non-nil if ABBREV's display representation is shorter than FILENAME.
 This takes the font at POS into account."
-  ;; When activated from a hook, this function may run before the current
-  ;; buffer is shown in a window.  In that case, `font-at' would error with
-  ;; "Specified window is not displaying the current buffer".
+  ;; When activated from a hook, this function may run before the
+  ;; current buffer is shown in a window.  In that case, `font-at'
+  ;; would error with "Specified window is not displaying the current
+  ;; buffer".
   (let ((window (selected-window)))
     (when (and window
 	       (eq (window-buffer window) (current-buffer)))
@@ -140,7 +141,7 @@ These predicates are available:
     abbreviation is only shown if it is shorter (in the number of
     characters) than the original filename.  This is fast but
     doesn't work too good if `visual-filename-abbrev-ellipsis' is
-    displayed wider than what's abbreviater (which depends on the
+    displayed wider than what's abbreviated (which depends on the
     font).
 
   - `visual-filename-abbrev--abbrev-visually-shorter-p' ensures
@@ -152,6 +153,8 @@ These predicates are available:
   :type '(repeat function))
 
 (defun visual-filename-abbrev--abbreviate-p (buffer pos filename abbrev)
+  "Return non-nil if FILENAME in BUFFER at POS should be shown as ABBREV.
+See `visual-filename-abbrev-predicates'."
   (seq-every-p (lambda (pred)
 		 (funcall pred buffer pos filename abbrev))
 	       visual-filename-abbrev-predicates))
@@ -213,7 +216,7 @@ These predicates are available:
 ;;;###autoload
 (define-minor-mode visual-filename-abbrev-mode
   "Visually abbreviate the directory part of filenames."
-  nil " VFAbbr" nil
+  :lighter " VFAbbr"
   (if visual-filename-abbrev-mode
       (progn
 	(jit-lock-register #'visual-filename-abbrev--jit-lock)
